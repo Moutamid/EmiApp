@@ -96,6 +96,7 @@ public class AdminReceiver extends DeviceAdminReceiver {
             long diff = System.currentTimeMillis() - current_time;
             if (diff < 10000) {
                 Log.d("Timer", "1 second");
+
                 dpm.lockNow();
                 Intent homeScreenIntent = new Intent(Intent.ACTION_MAIN);
                 homeScreenIntent.addCategory(Intent.CATEGORY_HOME);
