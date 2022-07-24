@@ -11,10 +11,16 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -43,21 +49,9 @@ public class YourService extends Service {
     public void onCreate() {
         super.onCreate();
         AlertDialog.Builder builder = new AlertDialog.Builder(YourService.this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog);
-        builder.setMessage("Please pay your Emi!");
-        builder.setTitle("Alert from Emi App");
+        builder.setTitle("Your phone's Emi is due!");
+        builder.setMessage("That's why your phone is locked. Contact your mobile dealer to unlock!");
         builder.setCancelable(false);
-        /*builder.setNegativeButton(getResources().getString(R.string.Hide), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.setPositiveButton(getResources().getString(R.string.sure), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-
-            }
-        });*/
-
         alert = builder.create();
         alert.setCancelable(false);
         alert.setCanceledOnTouchOutside(false);
@@ -72,6 +66,16 @@ public class YourService extends Service {
         else
             startForeground(1, new Notification());
     }
+
+    TimerTask lock_task = new TimerTask() {
+        @Override
+        public void run() {
+            Intent homeScreenIntent = new Intent(Intent.ACTION_MAIN);
+            homeScreenIntent.addCategory(Intent.CATEGORY_HOME);
+            homeScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            YourService.this.startActivity(homeScreenIntent);
+        }
+    };
 
     @RequiresApi(Build.VERSION_CODES.O)
     private void startMyOwnForeground() {
@@ -115,10 +119,10 @@ public class YourService extends Service {
 
                             if (isLocked) {
                                 // IS LOCKED AND SHOW NOTIFICATION AND DIALOG
-                                NotificationHelper notificationHelper = new NotificationHelper(getApplicationContext());
+                                /*NotificationHelper notificationHelper = new NotificationHelper(getApplicationContext());
                                 notificationHelper.sendHighPriorityNotification(
                                         "Message from Emi App",
-                                        "Please pay your EMI!!", MainActivity.class);
+                                        "Please pay your EMI!!", MainActivity.class);*/
                                 showDialog();
                             } else {
                                 // REMOVE NOTIFICATION AND DIALOG IF SHOWING
@@ -134,49 +138,35 @@ public class YourService extends Service {
                     }
                 });
 
-        /*databaseReference.child(Constants.NOTIFICATIONS).child(mAuth.getUid())
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (!snapshot.exists()) {
-                            return;
-                        }
-
-                        ArrayList<NotificationModel> notificationModelArrayList = new ArrayList<>();
-
-                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-
-                            NotificationModel model = dataSnapshot.getValue(NotificationModel.class);
-                            notificationModelArrayList.add(model);
-
-                        }
-
-                        for (NotificationModel model : notificationModelArrayList) {
-
-                            databaseReference.child(Constants.NOTIFICATIONS).child(mAuth.getUid())
-                                    .child(model.getPushKey())
-                                    .removeValue();
-*/
-
-
-//                        }
-//
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(@NonNull DatabaseError error) {
-//
-//                    }
-//                });
 
         return START_STICKY;
     }
 
+    long current_time;
+    Timer myThread;
+    Context contextt;
+
     public void showDialog() {
+
+        myThread = new Timer();
+        current_time = System.currentTimeMillis();
+        myThread.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Intent homeScreenIntent = new Intent(Intent.ACTION_MAIN);
+                homeScreenIntent.addCategory(Intent.CATEGORY_HOME);
+                homeScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                YourService.this.startActivity(homeScreenIntent);
+            }
+        }, 0, 500);
+//        myThread.schedule(lock_task, 0, 500);
         alert.show();
     }
 
     public void hideDialog() {
+        if (myThread != null)
+            myThread.cancel();
+
         if (alert.isShowing()) {
             alert.dismiss();
         }

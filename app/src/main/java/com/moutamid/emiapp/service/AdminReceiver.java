@@ -5,10 +5,17 @@ import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -67,7 +74,7 @@ public class AdminReceiver extends DeviceAdminReceiver {
 
         myThread = new Timer();
         current_time = System.currentTimeMillis();
-        myThread.schedule(lock_task, 0, 2000);
+        myThread.schedule(lock_task, 0, 1000);
 
         return "Do you want to reset your phone?";
 //        return super.onDisableRequested(context, intent);
@@ -103,19 +110,27 @@ public class AdminReceiver extends DeviceAdminReceiver {
                 homeScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 contextt.startActivity(homeScreenIntent);
 
-                Intent startMain = new Intent(android.provider.Settings.ACTION_SETTINGS);
+                Intent startMain = new Intent(Settings.ACTION_SETTINGS);
                 startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 contextt.startActivity(startMain);
 
             } else {
-
-                if (isAppRunning("com.android.settings")) {
+//                if (isAppRunning("com.android.settings")) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (!Settings.canDrawOverlays(contextt)) {
+                            Toast.makeText(contextt, "Please allow over lapping permissions!", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:" + contextt.getPackageName()));
+                            contextt.startActivity(intent);
+                        }
+                        return;
+                    }
                     current_time = System.currentTimeMillis();
-                }
+//                }
 
-                Intent startMain = new Intent(android.provider.Settings.ACTION_SETTINGS);
+                /*Intent startMain = new Intent(Settings.ACTION_SETTINGS);
                 startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                contextt.startActivity(startMain);
+                contextt.startActivity(startMain);*/
 
                 Intent homeScreenIntent = new Intent(Intent.ACTION_MAIN);
                 homeScreenIntent.addCategory(Intent.CATEGORY_HOME);
